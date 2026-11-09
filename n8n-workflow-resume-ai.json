@@ -1,0 +1,305 @@
+{
+  "name": "CR7XMESSI AND YAMAL CHAMPION - Enterprise 12-Node AI Architecture",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-1-webhook",
+      "name": "1. Webhook Listener",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [100, 300],
+      "webhookId": "chat"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node 2: Input Sanitization & Session Validation\nconst body = $input.item.json.body || {};\nconst message = (body.chatInput || body.message || body.prompt || \"\").toString().trim();\nconst sessionId = body.sessionId || `session_${Date.now()}`;\nconst timestamp = new Date().toISOString();\n\nreturn {\n  json: {\n    message: message,\n    cleanQuery: message.toLowerCase(),\n    sessionId: sessionId,\n    timestamp: timestamp,\n    isValid: message.length > 0\n  }\n};"
+      },
+      "id": "node-2-sanitize",
+      "name": "2. Sanitize & Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.cleanQuery }}",
+        "rules": {
+          "rules": [
+            {
+              "operation": "contains",
+              "value2": "สมาชิก"
+            },
+            {
+              "operation": "contains",
+              "value2": "ผลงาน"
+            },
+            {
+              "operation": "contains",
+              "value2": "ราคา"
+            }
+          ]
+        }
+      },
+      "id": "node-3-switch",
+      "name": "3. Category Switch Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [540, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT member_key, full_name, role_title, email, github_url, skills FROM public.team_members ORDER BY created_at ASC;"
+      },
+      "id": "node-4-fetch-members",
+      "name": "4. Fetch Supabase Members Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [780, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT project_name, description, live_url, github_url, contributors FROM public.team_projects ORDER BY created_at DESC;"
+      },
+      "id": "node-5-fetch-projects",
+      "name": "5. Fetch Supabase Projects Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [780, 420],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node 6: Intent Classifier & Knowledge Aggregator\nconst inputData = $('2. Sanitize & Validate Input').item.json;\nconst q = inputData.cleanQuery;\n\nlet topic = \"general\";\nlet aiOutput = \"\";\n\nif (q.includes(\"วนนนท์\") || q.includes(\"wananon\") || q.includes(\"frontend\")) {\n  topic = \"member_wananon\";\n  aiOutput = \"วนนนท์ แสงทอง (Wananon Saengthong)\\n• ตำแหน่ง: Frontend Developer & UX/UI Designer\\n• อีเมล: 2310511101014@live4.utcc.ac.th\\n• GitHub: https://github.com/Nonperchica\\n• ความเชี่ยวชาญ: React, Vue.js, TypeScript, Figma Design System\\n• ดู Resume ตรง: /resume/wananon\";\n} else if (q.includes(\"เอกรินทร์\") || q.includes(\"aekkarin\") || q.includes(\"ekarin\") || q.includes(\"full-stack\")) {\n  topic = \"member_aekkarin\";\n  aiOutput = \"เอกรินทร์ นีระมนต์ (Aekkarin Neeramon)\\n• ตำแหน่ง: Full-Stack Developer & AI Automation Specialist\\n• อีเมล: mikp1919@gmail.com\\n• GitHub: https://github.com/Xkaroy\\n• ความเชี่ยวชาญ: Full-Stack Web, n8n, Make.com, AI Automation Workflows\\n• ดู Resume ตรง: /resume/aekkarin\";\n} else if (q.includes(\"บวรวิชญ์\") || q.includes(\"bawornwit\") || q.includes(\"pm\")) {\n  topic = \"member_bawornwit\";\n  aiOutput = \"บวรวิชญ์ สุรินทร์ (Bawornwit Surin)\\n• ตำแหน่ง: Project Manager & Full-Stack Developer\\n• อีเมล: bavonvit99@gmail.com\\n• GitHub: https://github.com/Bobangely\\n• ความเชี่ยวชาญ: Software Project Management, Cybersecurity Certified\\n• ดู Resume ตรง: /resume/bawornwit\";\n} else if (q.includes(\"คฑาพงษ์\") || q.includes(\"kathapong\") || q.includes(\"backend\")) {\n  topic = \"member_kathapong\";\n  aiOutput = \"คฑาพงษ์ มากรุง (Kathapong Makroong)\\n• ตำแหน่ง: Backend Developer & Cybersecurity Specialist\\n• อีเมล: kathapong123@hotmail.com\\n• GitHub: https://github.com/KMluvcod11\\n• ความเชี่ยวชาญ: Backend Architecture, High-Volume Data Handling, Security Audit\\n• ดู Resume ตรง: /resume/kathapong\";\n} else if (q.includes(\"ธนธรณ์\") || q.includes(\"thanathorn\") || q.includes(\"google\")) {\n  topic = \"member_thanathorn\";\n  aiOutput = \"ธนธรณ์ ศิริพันธ์ (Thanathorn Siriphan)\\n• ตำแหน่ง: Full-Stack Developer & Google Student Ambassador\\n• อีเมล: patzapaty13@gmail.com\\n• GitHub: https://github.com/patzapaty13-crypto\\n• ความเชี่ยวชาญ: Tactical Support Google Cloud AI Lab, Full-Stack, Next.js\\n• ดู Resume ตรง: /resume/thanathorn\";\n} else if (q.includes(\"สมาชิก\") || q.includes(\"ทีม\") || q.includes(\"ใครบ้าง\")) {\n  topic = \"team_overview\";\n  aiOutput = \"ทีม CR7XMESSI AND YAMAL CHAMPION มีสมาชิกทั้งหมด 5 คน ได้แก่:\\n1. วนนนท์ แสงทอง (Frontend Developer & UX/UI Designer)\\n2. เอกรินทร์ นีระมนต์ (Full-Stack & AI Automation)\\n3. บวรวิชญ์ สุรินทร์ (Project Manager & Cybersecurity Certified)\\n4. คฑาพงษ์ มากรุง (Lead Backend & Security Architect)\\n5. ธนธรณ์ ศิริพันธ์ (Full-Stack & Google Student Ambassador)\";\n} else if (q.includes(\"facecheck\") || q.includes(\"ผลงาน\") || q.includes(\"โปรเจกต์\")) {\n  topic = \"projects\";\n  aiOutput = \"ผลงานพัฒนาซอฟต์แวร์เด่นของทีมเรา:\\n1. FaceCheck Web: ระบบยืนยันตัวตนสแกนใบหน้า Real-time (https://facecheck-web.vercel.app)\\n2. FaceCheck Backend: API Service ประมวลผลความปลอดภัยข้อมูล\\n3. FaceCheck Mobile App: แอปมือถือสแกนใบหน้าลงเวลา\\n4. UTCC Internship Portal: ระบบบริหารจัดการการฝึกงาน ม.หอการค้าไทย (https://utcc-tp-indol.vercel.app)\";\n} else if (q.includes(\"ราคา\") || q.includes(\"แพ็กเกจ\") || q.includes(\"จ้าง\")) {\n  topic = \"pricing\";\n  aiOutput = \"ขอบเขตบริการของทีม CR7XMESSI AND YAMAL CHAMPION:\\n• Basic Website: เริ่มต้น 5,000฿ (Landing Page / เว็บองค์กร)\\n• Web Application & Portal: เริ่มต้น 15,000฿ (ระบบหลังบ้าน / แดชบอร์ด / RBAC)\\n• AI & Workflow Automation: เริ่มต้น 8,000฿ (เชื่อมต่อ n8n / Make / AI APIs)\";\n} else {\n  topic = \"general\";\n  aiOutput = \"สวัสดีครับ! พวกเราคือ AI Assistant ของทีม CR7XMESSI AND YAMAL CHAMPION ยินดีให้บริการพัฒนา Web Application, Mobile App, Backend API และ AI Workflow Automation ครับ สอบถามข้อมูลสมาชิกทั้ง 5 คน ผลงาน หรือแพ็กเกจราคา ได้เลยครับ!\";\n}\n\nreturn {\n  json: {\n    sessionId: inputData.sessionId,\n    userMessage: inputData.message,\n    topic: topic,\n    rawReply: aiOutput\n  }\n};"
+      },
+      "id": "node-6-intent-classifier",
+      "name": "6. Intent Classifier & Aggregator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node 7: Format & Senior Enterprise Response Formatting\nconst data = $input.item.json;\nconst cleanReply = data.rawReply;\n\nreturn {\n  json: {\n    sessionId: data.sessionId,\n    userMessage: data.userMessage,\n    reply: cleanReply,\n    status: \"success\",\n    processedAt: new Date().toISOString()\n  }\n};"
+      },
+      "id": "node-7-format",
+      "name": "7. Format Enterprise Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO public.chat_messages (session_id, sender, message) VALUES ('{{ $json.sessionId }}', 'user', '{{ $json.userMessage.replace(/'/g, \"''\") }}');"
+      },
+      "id": "node-8-save-user-msg",
+      "name": "8. Audit Save User Message to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [1460, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO public.chat_messages (session_id, sender, message) VALUES ('{{ $json.sessionId }}', 'ai', '{{ $json.reply.replace(/'/g, \"''\") }}');"
+      },
+      "id": "node-9-save-ai-msg",
+      "name": "9. Audit Save AI Reply to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [1460, 420],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "node-10-error-trigger",
+      "name": "10. Error Handler Catch Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [100, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node 11: Format Graceful Fallback Error Output\nconst errorData = $input.item.json;\nreturn {\n  json: {\n    reply: \"ขออภัยครับ ระบบกำลังประมวลผลผ่านสำรองเกี่ยวกับการพัฒนาซอฟต์แวร์ทีม CR7XMESSI AND YAMAL CHAMPION ท่านสามารถสอบถามเกี่ยวกับสมาชิก 5 คน ผลงาน FaceCheck หรือแพ็กเกจราคาได้เลยครับ\",\n    error: errorData.message || \"Workflow fallback executed\"\n  }\n};"
+      },
+      "id": "node-11-fallback",
+      "name": "11. Format Fallback Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 600]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"reply\": \"{{ $json.reply }}\"\n}",
+        "options": {}
+      },
+      "id": "node-12-respond",
+      "name": "12. Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1680, 300]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "1. Webhook Listener": {
+      "main": [
+        [
+          {
+            "node": "2. Sanitize & Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Sanitize & Validate Input": {
+      "main": [
+        [
+          {
+            "node": "3. Category Switch Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Category Switch Router": {
+      "main": [
+        [
+          {
+            "node": "4. Fetch Supabase Members Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "5. Fetch Supabase Projects Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "6. Intent Classifier & Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Fetch Supabase Members Data": {
+      "main": [
+        [
+          {
+            "node": "6. Intent Classifier & Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Fetch Supabase Projects Data": {
+      "main": [
+        [
+          {
+            "node": "6. Intent Classifier & Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Intent Classifier & Aggregator": {
+      "main": [
+        [
+          {
+            "node": "7. Format Enterprise Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Format Enterprise Response": {
+      "main": [
+        [
+          {
+            "node": "8. Audit Save User Message to Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "9. Audit Save AI Reply to Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "12. Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10. Error Handler Catch Trigger": {
+      "main": [
+        [
+          {
+            "node": "11. Format Fallback Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "11. Format Fallback Payload": {
+      "main": [
+        [
+          {
+            "node": "12. Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2.0.0"
+}

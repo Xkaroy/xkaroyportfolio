@@ -1,0 +1,24 @@
+{
+  "name": "xkaroyresume",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aekkarin Neeramon (เอกรินทร์ นีระมนต์) — Full-Stack Developer & AI Automation Specialist Portfolio",
+  "author": "Aekkarin Neeramon <mikp1919@gmail.com> (https://github.com/Xkaroy)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "autoprefixer": "^10.5.2",
+    "html2pdf.js": "^0.14.0",
+    "lucide-react": "^1.24.0",
+    "next": "16.2.10",
+    "postcss": "^8.5.19",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "socket.io-client": "^4.8.3",
+    "tailwindcss": "^4.3.2"
+  }
+}
